@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>錢的三道關卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* 版面：後台工作證風格。上方固定錢包列，下方是可點選的「報價單」格子。講師端是投影用的大舞台。 */
+:root {
+  --bg: #f3f4f8;
+  --surface: #ffffff;
+  --surface-2: #e9ecf4;
+  --ink: #161a2b;
+  --muted: #5b6178;
+  --line: #d3d8e6;
+  --talent: #2456a6;
+  --talent-soft: #e3ecfb;
+  --res: #c4541a;
+  --res-soft: #fcebdf;
+  --good: #1f7a4a;
+  --good-soft: #e1f3e8;
+  --bad: #b3261e;
+  --bad-soft: #fbe6e4;
+  --warn: #8a6100;
+  --warn-soft: #fbf0d3;
+  --gold: #e3a21a;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-num: "Space Grotesk", "Noto Sans TC", ui-monospace, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11131c; --surface: #1a1d2a; --surface-2: #242838; --ink: #eceef6; --muted: #a2a8bf; --line: #333950;
+    --talent: #7ea6ef; --talent-soft: #1d2a45; --res: #f08a4b; --res-soft: #3a2518;
+    --good: #5fcf8e; --good-soft: #17301f; --bad: #ff8a80; --bad-soft: #3a1a18; --warn: #f2c14e; --warn-soft: #332a12; --gold: #f2c14e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11131c; --surface: #1a1d2a; --surface-2: #242838; --ink: #eceef6; --muted: #a2a8bf; --line: #333950;
+  --talent: #7ea6ef; --talent-soft: #1d2a45; --res: #f08a4b; --res-soft: #3a2518;
+  --good: #5fcf8e; --good-soft: #17301f; --bad: #ff8a80; --bad-soft: #3a1a18; --warn: #f2c14e; --warn-soft: #332a12; --gold: #f2c14e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--talent); outline-offset: 2px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.25; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn { border: 1.5px solid var(--line); background: var(--surface); padding: 10px 18px; border-radius: 999px; font-weight: 700; }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.primary:disabled { opacity: .35; cursor: not-allowed; }
+.btn.small { padding: 6px 12px; font-size: 14px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.chip.good { background: var(--good-soft); color: var(--good); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.plain { background: var(--surface-2); color: var(--muted); }
+
+/* 首頁 */
+.hero { padding: 28px 0 8px; }
+.hero h1 { font-size: clamp(34px, 6vw, 60px); font-weight: 900; letter-spacing: .02em; }
+.hero h1 .num { color: var(--res); }
+.hero p { max-width: 60ch; color: var(--muted); margin: 10px 0 0; }
+.pick { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 24px 0; }
+.pick button { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r); padding: 22px 8px; font-size: 22px; font-weight: 900; }
+.pick button:hover { border-color: var(--talent); color: var(--talent); }
+.pick button span { display: block; font-size: 13px; font-weight: 500; color: var(--muted); }
+@media (max-width: 560px) { .pick { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.hostlink { margin-top: 8px; padding: 16px 18px; border: 1.5px dashed var(--line); border-radius: var(--r); display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+/* 組別端頂部 */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 12px 0; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.top .row { justify-content: space-between; }
+.team-tag { font-weight: 900; font-size: 18px; }
+.steps { display: flex; gap: 6px; flex-wrap: wrap; }
+.steps span { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-weight: 700; }
+.steps span.on { background: var(--ink); color: var(--bg); }
+.steps span.done { color: var(--good); }
+
+.mission { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r); padding: 18px 20px; display: grid; gap: 8px; }
+.mission .eyebrow { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .06em; }
+.mission h2 { font-size: 26px; font-weight: 900; }
+.quote { background: var(--surface-2); border-radius: 10px; padding: 8px 14px; font-weight: 500; }
+.reqs { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.wallet { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.coins { display: flex; gap: 5px; }
+.coin { width: 22px; height: 22px; border-radius: 50%; border: 2px solid currentColor; display: grid; place-items: center; font-size: 11px; font-weight: 700; font-family: var(--font-num); transition: transform .2s; }
+.coin.full { background: currentColor; }
+.coin.full::after { content: "1"; color: var(--surface); }
+.wallet.talent { color: var(--talent); }
+.wallet.res { color: var(--res); }
+.wallet .left { font-weight: 900; font-size: 18px; }
+
+.section-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; margin: 26px 0 12px; }
+.section-head h2 { font-size: 24px; font-weight: 900; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.item { text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 4px; align-content: start; position: relative; transition: border-color .15s, transform .15s; }
+.item:hover:not(:disabled) { transform: translateY(-2px); }
+.item:disabled { opacity: .45; cursor: not-allowed; }
+.item .price { font-family: var(--font-num); font-weight: 700; font-size: 24px; line-height: 1; }
+.item .name { font-weight: 900; font-size: 18px; }
+.item .cat { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+.item .pro, .item .con { font-size: 14px; }
+.item .pro b { color: var(--good); } .item .con b { color: var(--bad); }
+.item .check { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-weight: 900; }
+.item.t .price { color: var(--talent); }
+.item.r .price { color: var(--res); }
+.item.t.on { border-color: var(--talent); background: var(--talent-soft); }
+.item.r.on { border-color: var(--res); background: var(--res-soft); }
+.item.t.on .check { background: var(--talent); border-color: var(--talent); color: #fff; }
+.item.r.on .check { background: var(--res); border-color: var(--res); color: #fff; }
+.item .need { position: absolute; bottom: 12px; right: 12px; }
+
+.bar { position: sticky; bottom: 0; background: var(--bg); border-top: 1px solid var(--line); padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)); margin-top: 22px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; z-index: 4; }
+.status { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* 提案卡 */
+.pitch { background: var(--surface); border: 2px solid var(--ink); border-radius: 20px; padding: 24px; display: grid; gap: 16px; }
+.pitch h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 900; }
+.pitch .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.pitch h3 { font-size: 14px; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 15px; }
+.tag.t { background: var(--talent-soft); color: var(--talent); }
+.tag.r { background: var(--res-soft); color: var(--res); }
+.prompt { background: var(--warn-soft); color: var(--ink); border-radius: 12px; padding: 12px 16px; }
+
+/* 突發狀況 */
+.crisis-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 760px) { .crisis-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cbtn { background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 12px; text-align: left; display: grid; gap: 2px; }
+.cbtn .n { font-family: var(--font-num); font-weight: 700; font-size: 22px; }
+.cbtn .t { font-weight: 700; font-size: 14px; }
+.cbtn.hit { border-color: var(--bad); background: var(--bad-soft); }
+.cbtn.safe { border-color: var(--good); background: var(--good-soft); }
+.cbtn.na { opacity: .6; }
+.cbtn:disabled { cursor: default; }
+.result { border-radius: 16px; padding: 18px 20px; display: grid; gap: 6px; animation: pop .35s ease-out; }
+.result.hit { background: var(--bad-soft); border: 2px solid var(--bad); }
+.result.safe, .result.bonus { background: var(--good-soft); border: 2px solid var(--good); }
+.result.na { background: var(--surface-2); border: 2px solid var(--line); }
+.result h3 { font-size: 22px; font-weight: 900; }
+@keyframes pop { from { transform: scale(.96); } to { transform: none; } }
+
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.score div { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.score b { display: block; font-family: var(--font-num); font-size: 28px; }
+.score .total { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.vote { display: flex; gap: 8px; flex-wrap: wrap; }
+.vote button { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-weight: 700; }
+.vote button.on { background: var(--gold); border-color: var(--gold); color: #1a1300; }
+
+.panel { background: var(--surface); border: 2px solid var(--res); border-radius: 16px; padding: 18px; display: grid; gap: 12px; }
+.cutlist { display: flex; gap: 8px; flex-wrap: wrap; }
+.cutlist button { border: 1.5px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; font-weight: 700; }
+.cutlist button.on { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); text-decoration: line-through; }
+
+/* 講師端 */
+.host { min-height: 100%; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs button { border: none; background: var(--surface-2); padding: 8px 14px; border-radius: 999px; font-weight: 700; }
+.tabs button.on { background: var(--ink); color: var(--bg); }
+.hostbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; padding: 12px 0 16px; border-bottom: 1px solid var(--line); }
+.timer { display: flex; gap: 8px; align-items: center; }
+.timer .clock { font-family: var(--font-num); font-weight: 700; font-size: 34px; min-width: 4.2ch; text-align: right; }
+.timer .clock.low { color: var(--bad); }
+.stage { padding: 28px 0; display: grid; gap: 22px; }
+.stage h1 { font-size: clamp(34px, 5vw, 64px); font-weight: 900; }
+.stage .lead { font-size: clamp(18px, 2.2vw, 28px); max-width: 40ch; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.rules div { background: var(--surface); border: 1.5px solid var(--line); border-radius: 16px; padding: 18px; font-size: clamp(16px, 1.6vw, 21px); }
+.rules b { display: block; font-size: 1.15em; margin-bottom: 4px; }
+.reveal { background: var(--surface); border: 3px solid var(--bad); border-radius: 24px; padding: clamp(20px, 4vw, 44px); display: grid; gap: 14px; animation: flip .5s ease-out; }
+.reveal.good { border-color: var(--good); }
+@keyframes flip { from { transform: rotateX(70deg); opacity: .2; } to { transform: none; opacity: 1; } }
+.reveal .no { font-family: var(--font-num); font-weight: 700; font-size: clamp(20px, 2.4vw, 30px); color: var(--bad); }
+.reveal.good .no { color: var(--good); }
+.reveal h2 { font-size: clamp(36px, 6vw, 76px); font-weight: 900; }
+.reveal .desc { font-size: clamp(20px, 2.4vw, 30px); }
+.reveal dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: clamp(16px, 1.8vw, 22px); margin: 0; }
+.reveal dt { font-weight: 900; }
+.reveal dd { margin: 0; }
+.deck { display: flex; gap: 8px; flex-wrap: wrap; }
+.deck button { width: 54px; height: 54px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); font-family: var(--font-num); font-weight: 700; font-size: 20px; }
+.deck button.used { background: var(--surface-2); color: var(--muted); text-decoration: line-through; }
+.board { display: grid; gap: 8px; }
+.board .line { display: grid; grid-template-columns: 52px 1fr 120px; gap: 12px; align-items: center; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 14px; font-size: clamp(16px, 1.8vw, 22px); }
+.board .line.p1 { border-color: var(--gold); border-width: 3px; }
+.board .rank { font-family: var(--font-num); font-weight: 700; font-size: 1.3em; }
+.board input { width: 100%; font: inherit; font-family: var(--font-num); font-weight: 700; text-align: right; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink); }
+.bigq { font-size: clamp(30px, 4.6vw, 60px); font-weight: 900; line-height: 1.3; }
+.ab { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ab div { background: var(--surface); border: 2px solid var(--line); border-radius: 18px; padding: 22px; font-size: clamp(20px, 2.6vw, 34px); font-weight: 700; }
+.ab b { font-family: var(--font-num); color: var(--res); margin-right: 8px; }
+@media (max-width: 560px) { .ab { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* 錢的三道關卡 */
+.opt { text-align:left; background: var(--surface); border: 2px solid var(--line); border-radius: 18px; padding: 18px 22px; font-size: clamp(20px, 2.4vw, 30px); font-weight: 700; }
+.opt b { font-family: var(--font-num); color: var(--res); margin-right: 10px; }
+.opt.picked { border-color: var(--talent); background: var(--talent-soft); }
+.opt.right, .iss.right, .rt.right { border-color: var(--good); background: var(--good-soft); }
+.opt.wrongpick, .iss.wrongpick, .rt.wrongpick { border-color: var(--bad); background: var(--bad-soft); }
+.opt.dim, .iss.dim, .rt.dim { opacity: .45; }
+.opt:disabled, .iss:disabled, .rt:disabled { cursor: default; }
+.qwrap { overflow-x: auto; }
+.quote-t { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 12px; overflow: hidden; font-size: clamp(16px, 1.8vw, 22px); }
+.quote-t th, .quote-t td { padding: 10px 14px; border-bottom: 1px solid var(--line); text-align: left; }
+.quote-t th { font-size: 14px; color: var(--muted); letter-spacing: .06em; }
+.quote-t .r { text-align: right; }
+.quote-t tr.flag td { background: var(--bad-soft); color: var(--bad); font-weight: 700; }
+.quote-t tr.tot td { font-weight: 900; border-bottom: none; background: var(--surface-2); }
+.issues, .rights { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.iss, .rt { text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 12px 16px; font-weight: 700; font-size: clamp(16px, 1.7vw, 20px); display: grid; gap: 4px; }
+.iss small { font-weight: 500; font-size: 14px; color: var(--muted); }
+.iss.on, .rt.on { border-color: var(--talent); background: var(--talent-soft); }
+.iss.missed, .rt.missed { border-color: var(--good); border-style: dashed; }
+.rt.okpick { border-color: var(--warn); background: var(--warn-soft); }
+.sp { display: grid; gap: 8px; }
+.pitch h3 { font-size: 20px; letter-spacing: 0; color: var(--ink); }
+</style>
+
+</head>
+<body>
+<div id="app" class="wrap"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- 資料 ----------
+  const PRICES = [
+    { q: "請一位專業活動主持人，主持半天", o: ["3,000 元以下", "8,000～2 萬", "5 萬～10 萬", "20 萬以上"], a: 1, why: "一般專業主持人大約這個區間。藝人或知名主持人另外談，可能好幾十萬。" },
+    { q: "活動工讀生，一個人一天（8 小時）", o: ["4,000 元", "800 元", "6,000 元", "1,600～2,000 元"], a: 3, why: "照基本工資時薪換算，一天大約 1,600 元上下。便當、交通、保險還要另外算。" },
+    { q: "公共意外責任險，一場 500 人、一天的活動", o: ["5 萬元", "20 萬元", "幾千元", "不用錢"], a: 2, why: "很便宜，卻最常被忘記。很多場館和公部門活動會規定一定要保。" },
+    { q: "戶外中型舞台＋音響燈光，一天", o: ["1 萬元", "3 萬元", "15 萬～40 萬", "300 萬元"], a: 2, why: "差距很大，要看規模。報價裡通常包含搭台、拆台和技術人員。" },
+    { q: "3 × 3 公尺帳篷一頂，一天", o: ["1,500～3,000 元", "300 元", "1.5 萬元", "5 萬元"], a: 0, why: "單價不高，但數量一多就很可觀。搭設和運費也要問清楚。" },
+    { q: "流動廁所一座，一天", o: ["不用錢", "500 元", "3 萬元", "3,000～6,000 元"], a: 3, why: "包含運送和清潔。戶外活動人一多就一定要有，而且常常被漏掉。" },
+    { q: "10 萬粉絲的網紅，一則合作貼文", o: ["2 萬～8 萬", "1,000 元", "5,000 元", "100 萬元"], a: 0, why: "要看互動率和內容形式。限時動態、貼文、短影音的價錢都不一樣。" },
+    { q: "報價單上的營業稅是多少？", o: ["0%", "5%", "10%", "20%"], a: 1, why: "台灣的營業稅是 5%。報價時一定要寫清楚是「含稅」還是「未稅」。" },
+  ];
+
+  const QUOTE = [
+    { n: "場地租借（活動當天）", qty: "1 天", u: 60000, sum: 60000 },
+    { n: "舞台音響燈光", qty: "1 式", u: 250000, sum: 250000 },
+    { n: "主持人", qty: "1 位", u: 15000, sum: 15000 },
+    { n: "表演樂團", qty: "3 組", u: 40000, sum: 120000 },
+    { n: "工讀生", qty: "20 人", u: 1600, sum: 23000, bad: true },
+    { n: "社群宣傳", qty: "1 式", u: 30000, sum: 30000 },
+    { n: "帳篷", qty: "10 頂", u: 2000, sum: 20000 },
+  ];
+  const ISSUES = [
+    { t: "工讀生的金額算錯了", real: true, why: "20 人 × 1,600 元應該是 32,000，不是 23,000。少算 9,000 元，乙方自己吸收。" },
+    { t: "沒有營業稅 5%", real: true, why: "沒寫含稅還是未稅，最後一定吵架。這張單子少了 5%。" },
+    { t: "沒有保險", real: true, why: "公共意外責任險只要幾千元，但沒保的話，出事要賠的是你。" },
+    { t: "場地只租活動當天", real: true, why: "前一天要進場搭台、彩排，結束後還要拆場。至少要多租一天。" },
+    { t: "工讀生沒有算餐費", real: true, why: "20 個人工作一整天，便當和水都要錢。" },
+    { t: "沒有預備金", real: true, why: "一定會有臨時狀況。通常留總預算的 5%～10%。" },
+    { t: "沒有管理費（公司的利潤）", real: true, why: "乙方也要付企劃、PM、會計的薪水。管理費常見是 10%～15%。" },
+    { t: "主持人太便宜，一定請不到", real: false, why: "1.5 萬元請專業主持人半天是合理的，不是問題。" },
+    { t: "不應該請 3 組樂團", real: false, why: "要請幾組是企劃決定，不是報價錯誤。" },
+    { t: "社群宣傳不應該花錢", real: false, why: "宣傳本來就要預算。沒人知道的活動，再好也沒人來。" },
+    { t: "帳篷買太多頂", real: false, why: "500 人的戶外活動，10 頂帳篷不算多。" },
+  ];
+
+  const RIGHTS = [
+    { id: "logo", n: "背板和海報放 LOGO" },
+    { id: "mc", n: "主持人口播感謝" },
+    { id: "booth", n: "現場攤位試喝試用" },
+    { id: "lead", n: "報名表加「願意收到品牌訊息」勾選" },
+    { id: "title", n: "活動冠名「○○之夜」" },
+    { id: "social", n: "社群貼文標記品牌" },
+    { id: "award", n: "品牌主管上台頒獎" },
+    { id: "job", n: "徵才攤位＋實習說明會" },
+  ];
+  const SPONSORS = [
+    { n: "泡泡茶飲", kind: "連鎖手搖飲", budget: 30000, say: "我們想跟年輕人更近一點。", best: ["booth"], ok: ["social", "logo"],
+      truth: "其實老闆只在乎一件事：活動當天能不能多賣幾杯。給試喝攤位，最好附折價券。" },
+    { n: "速通電信", kind: "電信公司", budget: 80000, say: "我們很重視校園市場。", best: ["lead"], ok: ["booth"],
+      truth: "業務部門的 KPI 是辦門號。他們要的是名單和現場辦卡，不是 LOGO。" },
+    { n: "海港銀行", kind: "銀行", budget: 150000, say: "我們想讓品牌看起來年輕一點。", best: ["award", "title"], ok: ["mc", "social"],
+      truth: "品牌部要的是形象：冠名、主管上台、照片上新聞。現場推信用卡反而會被罵。" },
+    { n: "晶創科技", kind: "半導體公司", budget: 100000, say: "我們想多認識你們學校的學生。", best: ["job"], ok: ["award", "lead"],
+      truth: "人資缺工程師缺到發慌。給他徵才攤位和實習說明會，他當場就簽。" },
+  ];
+
+  const MIN = [3, 10, 12, 15, 5];
+  const STEPS = ["開場", "第一關　猜猜多少錢", "第二關　報價單找碴", "第三關　贊助配對", "結算"];
+
+  // ---------- 狀態 ----------
+  function load(k, f) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch (e) { return f; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function fresh() { return { step: 0, pi: 0, pAns: {}, pShow: {}, sel: [], issuesShown: false, si: 0, picks: {}, sShow: {}, timerEnd: null, timerLeft: MIN[0] * 60 }; }
+  let G = Object.assign(fresh(), load("money-class", {}));
+  const persist = () => save("money-class", G);
+  const app = document.getElementById("app");
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const money = n => n.toLocaleString("zh-TW");
+
+  // ---------- 計算 ----------
+  function priceScore() { return PRICES.reduce((s, p, i) => s + (G.pShow[i] && G.pAns[i] === p.a ? 1 : 0), 0); }
+  function issueScore() {
+    let hit = 0, wrong = 0;
+    G.sel.forEach(i => ISSUES[i].real ? hit++ : wrong++);
+    return { hit, wrong, total: ISSUES.filter(x => x.real).length };
+  }
+  function fixedQuote() {
+    const items = QUOTE.reduce((s, r) => s + r.u * (r.qty.match(/\d+/) ? +r.qty.match(/\d+/)[0] : 1), 0);
+    const meal = 20 * 150, venue = 60000, ins = 5000;
+    const direct = items + meal + venue + ins;
+    const reserve = Math.round(direct * 0.05);
+    const fee = Math.round((direct + reserve) * 0.12);
+    const pre = direct + reserve + fee;
+    const tax = Math.round(pre * 0.05);
+    return { items, meal, venue, ins, direct, reserve, fee, pre, tax, total: pre + tax };
+  }
+  function sponsorResult(i) {
+    const s = SPONSORS[i], p = G.picks[i] || [];
+    let pct = 0;
+    p.forEach(id => { if (s.best.includes(id)) pct += 50; else if (s.ok.includes(id)) pct += 25; });
+    pct = Math.min(100, pct);
+    return { pct, amount: Math.round(s.budget * pct / 100) };
+  }
+  function sponsorTotal() { return SPONSORS.reduce((s, _, i) => s + (G.sShow[i] ? sponsorResult(i).amount : 0), 0); }
+
+  // ---------- 計時 ----------
+  const timeLeft = () => G.timerEnd ? Math.max(0, Math.round((G.timerEnd - Date.now()) / 1000)) : G.timerLeft;
+  const fmt = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  setInterval(() => {
+    const el = document.getElementById("clock"); if (!el) return;
+    const s = timeLeft(); el.textContent = fmt(s); el.classList.toggle("low", s <= 30);
+    if (G.timerEnd && s === 0) { G.timerLeft = 0; G.timerEnd = null; persist(); render(); }
+  }, 500);
+
+  // ---------- 畫面 ----------
+  const ask = t => `<div class="prompt"><b>問全班：</b>${t}</div>`;
+  function render() {
+    const s = timeLeft();
+    let h = `<div class="hostbar"><div class="tabs">${STEPS.map((n, i) => `<button class="${G.step === i ? "on" : ""}" data-step="${i}">${n}</button>`).join("")}</div>
+      <div class="timer"><span id="clock" class="clock ${s <= 30 ? "low" : ""}">${fmt(s)}</span>
+      <button class="btn small" data-act="tgo">${G.timerEnd ? "暫停" : "開始"}</button><button class="btn small" data-act="treset">重設</button></div></div><div class="stage">`;
+    h += [stepOpen, stepPrice, stepQuote, stepSponsor, stepEnd][G.step]();
+    app.innerHTML = h + `</div>`;
+  }
+
+  function stepOpen() {
+    return `<h1>錢的三道關卡</h1>
+      <p class="lead">辦活動，錢會從三個地方讓你哭：不知道東西多少錢、報價單算錯、找不到人出錢。今天全班一起闖三關。</p>
+      <div class="rules"><div><b>第一關　猜猜多少錢</b>8 個活動常見的開銷，全班舉手猜價錢。</div>
+      <div><b>第二關　報價單找碴</b>一張看起來沒問題的報價單，裡面藏了 7 個問題。</div>
+      <div><b>第三關　贊助配對</b>4 個品牌想贊助，但他們說的和想的不一樣。猜中他真正要什麼，錢才會進來。</div></div>
+      <div class="row"><button class="btn primary" data-act="next">開始第一關 →</button></div>`;
+  }
+
+  function stepPrice() {
+    const i = G.pi, p = PRICES[i], shown = G.pShow[i], ans = G.pAns[i];
+    let h = `<div class="row" style="justify-content:space-between"><span class="chip plain">第 ${i + 1} / ${PRICES.length} 題</span><span class="chip good">全班答對 ${priceScore()} 題</span></div>
+      <h1 style="font-size:clamp(30px,4.4vw,56px)">${esc(p.q)}</h1>
+      ${shown ? "" : ask("每個選項舉一次手，數一下人數，再點全班最多人選的那一個。")}
+      <div class="ab" style="grid-template-columns:1fr 1fr">${p.o.map((o, k) => {
+        let cls = "";
+        if (shown) cls = k === p.a ? "right" : (k === ans ? "wrongpick" : "dim");
+        else if (k === ans) cls = "picked";
+        return `<button class="opt ${cls}" data-pans="${k}" ${shown ? "disabled" : ""}><b>${"ABCD"[k]}</b>${esc(o)}</button>`;
+      }).join("")}</div>`;
+    if (shown) h += `<div class="result ${ans === p.a ? "safe" : "hit"}"><h3>${ans === p.a ? "全班答對！" : "答案是 " + "ABCD"[p.a] + "：" + esc(p.o[p.a])}</h3><div>${esc(p.why)}</div></div>`;
+    h += `<div class="row" style="justify-content:space-between"><button class="btn" data-act="pprev" ${i === 0 ? "disabled" : ""}>← 上一題</button>
+      ${shown ? (i < PRICES.length - 1 ? `<button class="btn primary" data-act="pnext">下一題 →</button>` : `<button class="btn primary" data-act="next">進入第二關 →</button>`)
+        : `<button class="btn primary" data-act="preveal" ${ans == null ? "disabled" : ""}>公布答案</button>`}</div>
+      <p class="muted" style="font-size:13px">價格是業界常見行情的示意，各地區、規模差很多。</p>`;
+    return h;
+  }
+
+  function stepQuote() {
+    const sc = issueScore();
+    let h = `<div class="row" style="justify-content:space-between;align-items:end"><div><h1 style="font-size:clamp(28px,4vw,48px)">報價單找碴</h1>
+      <p class="muted" style="margin:4px 0 0">校園演唱會｜500 人｜一天。這張報價單有 7 個真正的問題。</p></div>
+      ${G.issuesShown ? `<span class="chip good">全班抓到 ${sc.hit} / ${sc.total} 個，誤判 ${sc.wrong} 個</span>` : ""}</div>`;
+    h += `<div class="qwrap"><table class="quote-t"><thead><tr><th>項目</th><th>數量</th><th class="r">單價</th><th class="r">小計</th></tr></thead><tbody>
+      ${QUOTE.map(r => `<tr class="${G.issuesShown && r.bad ? "flag" : ""}"><td>${esc(r.n)}</td><td>${esc(r.qty)}</td><td class="r num">${money(r.u)}</td><td class="r num">${money(r.sum)}</td></tr>`).join("")}
+      <tr class="tot"><td colspan="3">合計</td><td class="r num">${money(QUOTE.reduce((s, r) => s + r.sum, 0))}</td></tr></tbody></table></div>`;
+    if (!G.issuesShown) h += ask("哪裡有問題？同學喊出來，講師點選。點錯可以再點一次取消。");
+    h += `<div class="issues">${ISSUES.map((x, i) => {
+      const on = G.sel.includes(i);
+      let cls = on ? "on" : "";
+      if (G.issuesShown) cls = x.real ? (on ? "right" : "missed") : (on ? "wrongpick" : "dim");
+      return `<button class="iss ${cls}" data-iss="${i}" ${G.issuesShown ? "disabled" : ""}><span>${esc(x.t)}</span>${G.issuesShown && (on || x.real) ? `<small>${esc(x.why)}</small>` : ""}</button>`;
+    }).join("")}</div>`;
+    if (G.issuesShown) {
+      const f = fixedQuote();
+      h += `<div class="pitch"><h3>改好之後，這張單子其實要多少錢？</h3>
+        <div class="qwrap"><table class="quote-t"><tbody>
+        <tr><td>原本的項目（金額算對）</td><td class="r num">${money(f.items)}</td></tr>
+        <tr><td>＋ 多租一天場地（搭台和拆場）</td><td class="r num">${money(f.venue)}</td></tr>
+        <tr><td>＋ 工讀生餐費（20 人 × 150 元）</td><td class="r num">${money(f.meal)}</td></tr>
+        <tr><td>＋ 公共意外責任險</td><td class="r num">${money(f.ins)}</td></tr>
+        <tr><td>＋ 預備金 5%</td><td class="r num">${money(f.reserve)}</td></tr>
+        <tr><td>＋ 管理費 12%</td><td class="r num">${money(f.fee)}</td></tr>
+        <tr><td>＋ 營業稅 5%</td><td class="r num">${money(f.tax)}</td></tr>
+        <tr class="tot"><td>真正的總價</td><td class="r num">${money(f.total)}</td></tr></tbody></table></div>
+        <div class="prompt">原本報 <b class="num">${money(QUOTE.reduce((s, r) => s + r.sum, 0))}</b> 元，真正要 <b class="num">${money(f.total)}</b> 元，差了 <b class="num">${money(f.total - QUOTE.reduce((s, r) => s + r.sum, 0))}</b> 元。這筆錢不是甲方出，就是你自己出。</div></div>`;
+    }
+    h += `<div class="row" style="justify-content:space-between"><button class="btn" data-act="back">← 上一關</button>
+      ${G.issuesShown ? `<button class="btn primary" data-act="next">進入第三關 →</button>` : `<button class="btn primary" data-act="ireveal">公布答案</button>`}</div>`;
+    return h;
+  }
+
+  function stepSponsor() {
+    const i = G.si, s = SPONSORS[i], p = G.picks[i] || [], shown = G.sShow[i];
+    let h = `<div class="row" style="justify-content:space-between"><span class="chip plain">品牌 ${i + 1} / ${SPONSORS.length}</span><span class="chip good">已經談到 <span class="num">${money(sponsorTotal())}</span> 元</span></div>
+      <div class="sp"><div class="muted" style="font-weight:700">${esc(s.kind)}｜贊助預算最多 <span class="num">${money(s.budget)}</span> 元</div>
+      <h1 style="font-size:clamp(34px,5vw,60px)">${esc(s.n)}</h1>
+      <div class="bigq" style="font-size:clamp(22px,3vw,36px)">品牌窗口說：「${esc(s.say)}」</div></div>`;
+    if (!shown) h += ask("他真正想要的是什麼？只能給 2 項權益，全班表決選哪 2 項。");
+    h += `<div class="rights">${RIGHTS.map(r => {
+      const on = p.includes(r.id);
+      let cls = on ? "on" : "";
+      if (shown) cls = s.best.includes(r.id) ? (on ? "right" : "missed") : s.ok.includes(r.id) ? (on ? "okpick" : "dim") : (on ? "wrongpick" : "dim");
+      const full = !on && p.length >= 2;
+      return `<button class="rt ${cls}" data-right="${r.id}" ${shown || full ? "disabled" : ""}>${esc(r.n)}</button>`;
+    }).join("")}</div>`;
+    if (shown) {
+      const r = sponsorResult(i);
+      h += `<div class="result ${r.pct >= 75 ? "safe" : r.pct > 0 ? "na" : "hit"}"><h3>${r.pct === 100 ? "當場簽約！" : r.pct > 0 ? "願意談，但只給一部分" : "謝謝再聯絡"}　<span class="num">${money(r.amount)}</span> 元（${r.pct}%）</h3>
+        <div><b>他心裡真正想的：</b>${esc(s.truth)}</div></div>`;
+    }
+    h += `<div class="row" style="justify-content:space-between"><button class="btn" data-act="sprev" ${i === 0 ? "disabled" : ""}>← 上一個品牌</button>
+      ${shown ? (i < SPONSORS.length - 1 ? `<button class="btn primary" data-act="snext">下一個品牌 →</button>` : `<button class="btn primary" data-act="next">看結算 →</button>`)
+        : `<button class="btn primary" data-act="sreveal" ${p.length === 2 ? "" : "disabled"}>送出提案</button>`}</div>`;
+    return h;
+  }
+
+  function stepEnd() {
+    const sc = issueScore(), maxS = SPONSORS.reduce((s, x) => s + x.budget, 0);
+    return `<h1>結算</h1>
+      <div class="score">
+        <div>第一關　猜價格<b>${priceScore()} / ${PRICES.length}</b><span class="muted" style="font-size:13px">全班答對題數</span></div>
+        <div>第二關　找碴<b>${sc.hit} / ${sc.total}</b><span class="muted" style="font-size:13px">誤判 ${sc.wrong} 個</span></div>
+        <div class="total">第三關　贊助<b>${money(sponsorTotal())}</b><span style="font-size:13px;opacity:.75">最多可以談到 ${money(maxS)} 元</span></div></div>
+      <div class="rules"><div><b>收尾問題 1</b>哪一個價錢最讓你意外？</div>
+      <div><b>收尾問題 2</b>報價單差的那十幾萬，如果是你，會怎麼跟甲方開口？</div>
+      <div><b>收尾問題 3</b>品牌嘴上說的和心裡想的不一樣。你要怎麼在提案前就問出來？</div></div>
+      <div class="row"><button class="btn small" data-act="reset">全部重來</button></div>`;
+  }
+
+  function goStep(n) { G.step = n; G.timerEnd = null; G.timerLeft = MIN[n] * 60; persist(); window.scrollTo(0, 0); render(); }
+
+  // ---------- 事件 ----------
+  app.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || b.disabled) return;
+    const d = b.dataset;
+    if (d.step) return goStep(+d.step);
+    if (d.pans) { G.pAns[G.pi] = +d.pans; persist(); return render(); }
+    if (d.iss) { const i = +d.iss, j = G.sel.indexOf(i); if (j >= 0) G.sel.splice(j, 1); else G.sel.push(i); persist(); return render(); }
+    if (d.right) { const p = G.picks[G.si] = G.picks[G.si] || [], j = p.indexOf(d.right); if (j >= 0) p.splice(j, 1); else if (p.length < 2) p.push(d.right); persist(); return render(); }
+    switch (d.act) {
+      case "next": return goStep(Math.min(4, G.step + 1));
+      case "back": return goStep(Math.max(0, G.step - 1));
+      case "preveal": G.pShow[G.pi] = true; break;
+      case "pnext": G.pi = Math.min(PRICES.length - 1, G.pi + 1); break;
+      case "pprev": G.pi = Math.max(0, G.pi - 1); break;
+      case "ireveal": G.issuesShown = true; break;
+      case "sreveal": G.sShow[G.si] = true; break;
+      case "snext": G.si = Math.min(SPONSORS.length - 1, G.si + 1); break;
+      case "sprev": G.si = Math.max(0, G.si - 1); break;
+      case "reset": if (!d.sure) { d.sure = "1"; b.textContent = "再按一次確定重來"; return; } G = fresh(); break;
+      case "tgo": if (G.timerEnd) { G.timerLeft = timeLeft(); G.timerEnd = null; } else { if (G.timerLeft <= 0) G.timerLeft = MIN[G.step] * 60; G.timerEnd = Date.now() + G.timerLeft * 1000; } break;
+      case "treset": G.timerEnd = null; G.timerLeft = MIN[G.step] * 60; break;
+      default: return;
+    }
+    persist(); render();
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
